@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Позивних — Тактичний Інструмент</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Tactical Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Chakra Petch', 'monospace'],
+                    },
+                    colors: {
+                        tactical: {
+                            bg: '#090a0f',
+                            card: '#12151e',
+                            border: '#232838',
+                            hover: '#1c2233',
+                            amber: '#f59e0b',
+                            amberDark: '#b45309',
+                            olive: '#84cc16',
+                            oliveDark: '#4d7c0f',
+                            cyan: '#06b6d4',
+                            red: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090a0f;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.05) 0%, transparent 70%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        .tactical-border {
+            position: relative;
+        }
+        .tactical-border::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 8px; height: 8px;
+            border-top: 2px solid #f59e0b;
+            border-left: 2px solid #f59e0b;
+        }
+        .tactical-border::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 8px; height: 8px;
+            border-bottom: 2px solid #f59e0b;
+            border-right: 2px solid #f59e0b;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232838;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 2.5s infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header Section -->
+    <header class="border-b border-tactical-border bg-tactical-card/90 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-tactical-amber/10 border border-tactical-amber/30 flex items-center justify-center text-tactical-amber text-xl font-bold font-tech shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                    <i class="fa-solid font-bold fa-walkie-talkie"></i>
+                </div>
+                <div>
+                    <h1 class="font-tech text-xl font-bold tracking-wider text-slate-100 uppercase flex items-center gap-2">
+                        ПОЗИВНИЙ <span class="text-tactical-amber text-xs px-2 py-0.5 rounded bg-tactical-amber/10 border border-tactical-amber/30">v1.3 MIL</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 font-mono">Тактичний генератор & радіо-аналізатор</p>
+                </div>
+            </div>
+
+            <!-- Tabs & Propose Button -->
+            <div class="flex items-center gap-3">
+                <nav class="flex bg-tactical-bg p-1 rounded-lg border border-tactical-border text-sm font-tech">
+                    <button onclick="switchTab('generator')" id="tab-generator" class="tab-btn active px-4 py-2 rounded-md font-semibold transition flex items-center gap-2 bg-tactical-amber text-black shadow">
+                        <i class="fa-solid fa-dice-d20"></i> <span class="hidden sm:inline">Генератор</span>
+                    </button>
+                    <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn px-4 py-2 rounded-md font-semibold text-slate-400 hover:text-slate-100 transition flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-question"></i> <span class="hidden sm:inline">Підбір за Роллю</span>
+                    </button>
+                    <button onclick="switchTab('analyzer')" id="tab-analyzer" class="tab-btn px-4 py-2 rounded-md font-semibold text-slate-400 hover:text-slate-100 transition flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple"></i> <span class="hidden sm:inline">Аналізатор</span>
+                    </button>
+                    <button onclick="switchTab('favorites')" id="tab-favorites" class="tab-btn px-4 py-2 rounded-md font-semibold text-slate-400 hover:text-slate-100 transition flex items-center gap-2 relative">
+                        <i class="fa-solid fa-bookmark"></i> <span class="hidden sm:inline">Обрані</span>
+                        <span id="fav-badge" class="bg-tactical-amber text-black text-xs px-1.5 py-0.2 rounded-full font-bold hidden">0</span>
+                    </button>
+                </nav>
+
+                <button onclick="openProposeModal()" class="px-3.5 py-2 bg-tactical-amber/10 hover:bg-tactical-amber text-tactical-amber hover:text-black border border-tactical-amber/30 rounded-lg font-tech text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-plus-circle"></i> <span>Запропонувати</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-grow">
+
+        <!-- ================= TAB 1: QUICK GENERATOR ================= -->
+        <section id="sec-generator" class="space-y-6">
+            <!-- Filter Bar -->
+            <div class="bg-tactical-card p-4 rounded-xl border border-tactical-border shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="w-full">
+                        <label class="block text-xs font-tech text-slate-400 uppercase tracking-wider mb-2">
+                            <i class="fa-solid fa-filter text-tactical-amber mr-1"></i> Оберіть Категорію Позивного
+                        </label>
+                        <div class="flex flex-wrap gap-2" id="category-pills">
+                            <!-- Categories generated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Display Card -->
+            <div class="bg-tactical-card rounded-2xl border border-tactical-border p-6 md:p-10 tactical-border shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 opacity-5 text-slate-100 text-9xl pointer-events-none font-tech">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div class="text-center max-w-2xl mx-auto space-y-6">
+                    <div class="inline-flex items-center gap-2 text-xs font-tech uppercase tracking-widest text-tactical-amber bg-tactical-amber/10 px-3 py-1 rounded-full border border-tactical-amber/20">
+                        <span class="w-2 h-2 rounded-full bg-tactical-amber animate-pulse"></span>
+                        <span id="display-category">УНІВЕРСАЛЬНИЙ</span>
+                    </div>
+
+                    <!-- CallSign Output Text -->
+                    <div class="py-4">
+                        <h2 id="callsign-output" class="text-5xl md:text-7xl font-tech font-bold text-slate-100 tracking-wider uppercase transition-all duration-300 drop-shadow-[0_0_25px_rgba(245,158,11,0.3)]">
+                            БАРС
+                        </h2>
+                    </div>
+
+                    <!-- CallSign Meaning & Details -->
+                    <p id="callsign-meaning" class="text-slate-300 text-lg leading-relaxed font-sans bg-tactical-bg/60 p-4 rounded-lg border border-tactical-border">
+                        Символ нічної пильності, спритності та витривалості. Ідеально підходить для розвідки та оперативного реагування.
+                    </p>
+
+                    <!-- MEME / VIBE CARD SECTION -->
+                    <div id="callsign-meme-card" class="bg-gradient-to-r from-amber-950/20 via-tactical-bg to-tactical-card p-4 md:p-5 rounded-xl border border-tactical-amber/30 text-left space-y-3 relative overflow-hidden shadow-inner">
+                        <div class="flex items-center justify-between border-b border-tactical-border/60 pb-2">
+                            <span class="text-xs font-tech text-tactical-amber font-bold tracking-wider uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-masks-theater text-amber-400"></i> Вайб & Армійський Мем
+                            </span>
+                            <span id="meme-badge" class="text-[10px] font-mono bg-tactical-amber/20 text-tactical-amber px-2 py-0.5 rounded border border-tactical-amber/30 uppercase">
+                                💯 100% База
+                            </span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 items-center">
+                            <div id="meme-icon-box" class="w-16 h-16 shrink-0 rounded-lg bg-tactical-card border border-tactical-amber/40 flex items-center justify-center text-3xl text-tactical-amber shadow-md">
+                                <i class="fa-solid fa-face-grin-squint"></i>
+                            </div>
+                            <div class="space-y-1 text-center sm:text-left">
+                                <h4 id="meme-title" class="font-tech text-sm font-bold text-amber-300 uppercase">
+                                    Ситуація на позиції:
+                                </h4>
+                                <p id="meme-text" class="text-xs md:text-sm text-slate-300 italic font-sans">
+                                    "Коли питають як ніч, а ти відповідаєш: 'Та нормас, дрони шуміли, але ми вже з ними здружилися'."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tactical Radio Rating Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-left">
+                        <div class="bg-tactical-bg p-3 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Кількість складів</span>
+                            <span id="syllables-count" class="text-lg font-tech font-bold text-slate-200">1 склад</span>
+                        </div>
+                        <div class="bg-tactical-bg p-3 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Радіорозбірливість</span>
+                            <div class="flex items-center gap-2">
+                                <span id="radio-score" class="text-lg font-tech font-bold text-tactical-amber">9.5 / 10</span>
+                                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                    <div id="radio-score-bar" class="bg-tactical-amber h-full" style="width: 95%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-tactical-bg p-3 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Ефірна оцінка</span>
+                            <span id="radio-advice" class="text-xs font-sans text-emerald-400 font-semibold block truncate">Відмінно чути в шумі</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap justify-center gap-4 pt-4">
+                        <button onclick="generateNewCallsign()" class="w-full sm:w-auto px-8 py-4 bg-tactical-amber hover:bg-amber-400 text-black font-tech font-bold text-lg rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.4)] active:scale-95 flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-arrows-rotate text-xl"></i> ЗГЕНЕРУВАТИ ПОЗИВНИЙ
+                        </button>
+                        <button onclick="saveCurrentToFavorites()" class="px-5 py-4 bg-tactical-bg hover:bg-tactical-hover text-slate-200 border border-tactical-border rounded-xl transition font-tech font-semibold active:scale-95 flex items-center gap-2">
+                            <i class="fa-regular fa-bookmark text-tactical-amber"></i> В Обране
+                        </button>
+                        <button onclick="copyCurrentCallsign()" class="px-5 py-4 bg-tactical-bg hover:bg-tactical-hover text-slate-200 border border-tactical-border rounded-xl transition font-tech font-semibold active:scale-95 flex items-center gap-2">
+                            <i class="fa-regular fa-copy text-tactical-cyan"></i> Копіювати
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: ROLE & CHARACTER QUIZ ================= -->
+        <section id="sec-quiz" class="hidden space-y-6">
+            <div class="bg-tactical-card p-6 md:p-8 rounded-2xl border border-tactical-border shadow-xl space-y-6">
+                <div>
+                    <h2 class="font-tech text-2xl font-bold text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                        <i class="fa-solid fa-crosshairs text-tactical-amber"></i> Підбір За Спеціалізацією Та Рисами
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">
+                        Дайте відповідь на 3 короткі питання, і алгоритм сформує 3 найбільш відповідні позивні з аргументацією.
+                    </p>
+                </div>
+
+                <div id="quiz-questions-container" class="space-y-6">
+                    <!-- Q1 -->
+                    <div class="space-y-3">
+                        <label class="block font-tech text-slate-300 text-sm uppercase tracking-wider">
+                            1. Ваша спеціалізація або військовий напрямок:
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="quiz-role-options">
+                            <button type="button" onclick="selectQuizOption('role', 'drone')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-drone text-tactical-amber"></i> Аеророзвідка / БПЛА
+                            </button>
+                            <button type="button" onclick="selectQuizOption('role', 'tech')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-tower-cell text-tactical-cyan"></i> Зв'язок / ІТ / РЕБ
+                            </button>
+                            <button type="button" onclick="selectQuizOption('role', 'med')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-notes-medical text-tactical-red"></i> Медицина / Евакуація
+                            </button>
+                            <button type="button" onclick="selectQuizOption('role', 'driver')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-truck-pickup text-tactical-olive"></i> Водій / Логістика
+                            </button>
+                            <button type="button" onclick="selectQuizOption('role', 'assault')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-person-rifle text-slate-400"></i> Піхота / Штурм
+                            </button>
+                            <button type="button" onclick="selectQuizOption('role', 'absurd')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-masks-theater text-amber-400"></i> Гумор та Абсурд
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="space-y-3">
+                        <label class="block font-tech text-slate-300 text-sm uppercase tracking-wider">
+                            2. Домінуюча риса характеру:
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="quiz-trait-options">
+                            <button type="button" onclick="selectQuizOption('trait', 'cool')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                ❄️ Холоднокровність
+                            </button>
+                            <button type="button" onclick="selectQuizOption('trait', 'fast')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                ⚡ Швидкість та реакція
+                            </button>
+                            <button type="button" onclick="selectQuizOption('trait', 'calm')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🛡️ Залізний спокій
+                            </button>
+                            <button type="button" onclick="selectQuizOption('trait', 'humor')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                😏 Гумор та іронія
+                            </button>
+                            <button type="button" onclick="selectQuizOption('trait', 'analytic')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🧠 Точний аналіз
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="space-y-3">
+                        <label class="block font-tech text-slate-300 text-sm uppercase tracking-wider">
+                            3. Базовий вайб або близька стихія:
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="quiz-vibe-options">
+                            <button type="button" onclick="selectQuizOption('vibe', 'night')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🌙 Тінь та Ніч
+                            </button>
+                            <button type="button" onclick="selectQuizOption('vibe', 'fire')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🔥 Вогонь та Драйв
+                            </button>
+                            <button type="button" onclick="selectQuizOption('vibe', 'air')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🦅 Висота та Повітря
+                            </button>
+                            <button type="button" onclick="selectQuizOption('vibe', 'absurd')" class="quiz-opt p-3 rounded-lg border border-tactical-border bg-tactical-bg text-left hover:border-tactical-amber transition text-sm">
+                                🤪 Максимальний Абсурд
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end">
+                        <button onclick="calculateQuizResults()" class="w-full sm:w-auto px-8 py-3 bg-tactical-amber hover:bg-amber-400 text-black font-tech font-bold rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Отримати Результати
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quiz-results-container" class="hidden space-y-6 pt-4 border-t border-tactical-border">
+                    <h3 class="font-tech text-xl font-bold text-tactical-amber uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-check-double"></i> Рекомендовані Позивні
+                    </h3>
+                    <div id="quiz-results-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Cards injected by JS -->
+                    </div>
+                    <div class="flex justify-center pt-2">
+                        <button onclick="resetQuiz()" class="px-6 py-2.5 bg-tactical-bg hover:bg-tactical-hover text-slate-300 border border-tactical-border rounded-lg font-tech text-sm transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Пройти тест ще раз
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: RADIO ANALYZER ================= -->
+        <section id="sec-analyzer" class="hidden space-y-6">
+            <div class="bg-tactical-card p-6 md:p-8 rounded-2xl border border-tactical-border shadow-xl space-y-6">
+                <div>
+                    <h2 class="font-tech text-2xl font-bold text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                        <i class="fa-solid fa-headset text-tactical-amber"></i> Перевірка Радіорозбірливості
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">
+                        Введіть свій придуманий або діючий позивний, щоб протестувати його чіткість під час роботи по рації в умовах перешкод.
+                    </p>
+                </div>
+
+                <div class="max-w-xl space-y-4">
+                    <div>
+                        <label class="block font-tech text-xs text-slate-400 uppercase mb-2">Ваш Варіант Позивного</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="custom-callsign-input" placeholder="Наприклад: Байрактар, Пельмень, Сокіл..." 
+                                class="w-full bg-tactical-bg border border-tactical-border rounded-xl px-4 py-3 font-tech text-slate-100 placeholder-slate-600 focus:outline-none focus:border-tactical-amber text-lg uppercase tracking-wider">
+                            <button onclick="analyzeCustomCallsign()" class="px-6 py-3 bg-tactical-amber hover:bg-amber-400 text-black font-tech font-bold rounded-xl transition flex items-center gap-2 shrink-0">
+                                <i class="fa-solid fa-magnifying-glass"></i> Аналіз
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analyzer-output" class="hidden bg-tactical-bg p-6 rounded-xl border border-tactical-border space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-tactical-border">
+                        <div>
+                            <span class="text-xs font-tech text-slate-400 uppercase block">Аналізований позивний</span>
+                            <h3 id="analysis-name" class="font-tech text-3xl font-bold text-tactical-amber uppercase">—</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-tech text-slate-400 uppercase block">Загальна оцінка чіткості</span>
+                            <span id="analysis-score-pct" class="font-tech text-3xl font-bold text-emerald-400">90%</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-tactical-card p-4 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Склади</span>
+                            <span id="analysis-syllables" class="text-lg font-tech font-bold text-slate-200">2 склади</span>
+                        </div>
+                        <div class="bg-tactical-card p-4 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Звучність</span>
+                            <span id="analysis-phonetics" class="text-lg font-tech font-bold text-slate-200">Висока</span>
+                        </div>
+                        <div class="bg-tactical-card p-4 rounded-lg border border-tactical-border">
+                            <span class="text-xs text-slate-400 font-tech block uppercase">Рекомендація</span>
+                            <span id="analysis-status" class="text-sm font-sans font-semibold text-emerald-400">Ідеальний для ефіру</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h4 class="font-tech text-xs text-slate-400 uppercase tracking-wider">Детальні Висновки Ефіру:</h4>
+                        <ul id="analysis-tips-list" class="space-y-2 text-sm text-slate-300">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: FAVORITES ================= -->
+        <section id="sec-favorites" class="hidden space-y-6">
+            <div class="bg-tactical-card p-6 md:p-8 rounded-2xl border border-tactical-border shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="font-tech text-2xl font-bold text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                            <i class="fa-solid fa-bookmark text-tactical-amber"></i> Збережені Позивні
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1">
+                            Ваш особистий список збережених варіантів для подальшого вибору.
+                        </p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="exportFavoritesText()" class="px-4 py-2 bg-tactical-bg hover:bg-tactical-hover border border-tactical-border rounded-lg text-xs font-tech font-semibold transition text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-download text-tactical-amber"></i> Експортувати список
+                        </button>
+                        <button onclick="clearAllFavorites()" class="px-4 py-2 bg-tactical-bg hover:bg-red-950/30 border border-tactical-border hover:border-red-800 text-xs font-tech font-semibold transition text-red-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-trash"></i> Очистити
+                        </button>
+                    </div>
+                </div>
+
+                <div id="favorites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated via JS -->
+                </div>
+
+                <div id="favorites-empty" class="text-center py-12 space-y-3">
+                    <div class="w-16 h-16 rounded-full bg-tactical-bg border border-tactical-border flex items-center justify-center mx-auto text-slate-600 text-2xl">
+                        <i class="fa-regular fa-bookmark"></i>
+                    </div>
+                    <p class="text-slate-400 font-tech uppercase text-sm">Список обраних поки порожній</p>
+                    <p class="text-xs text-slate-500">Генеруйте позивні та натискайте "В Обране", щоб зберегти їх сюди.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PROPOSE CALLSIGN MODAL -->
+    <div id="propose-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-tactical-card border border-tactical-border rounded-2xl max-w-lg w-full p-6 md:p-8 space-y-5 tactical-border shadow-2xl relative">
+            <button onclick="closeProposeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-100 text-lg p-2">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="space-y-1">
+                <h3 class="font-tech text-xl font-bold text-tactical-amber uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i> Запропонувати Свій Позивний
+                </h3>
+                <p class="text-xs text-slate-400 font-sans">
+                    Додайте новий позивний до загального алгоритму генератора.
+                </p>
+            </div>
+
+            <!-- Language Warning Badge -->
+            <div class="bg-amber-950/20 border border-amber-500/30 p-3 rounded-lg text-xs text-amber-300 font-tech flex items-center gap-2">
+                <i class="fa-solid fa-shield-cat text-sm"></i>
+                <span>Система приймає позивні виключно <b>Українською 🇺🇦</b> або <b>Англійською 🇬🇧</b> мовами. Російська мова блокується!</span>
+            </div>
+
+            <form id="propose-form" onsubmit="handleProposeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-tech text-slate-300 uppercase mb-1">Позивний *</label>
+                    <input type="text" id="prop-name" required placeholder="Наприклад: Борщ або Cyber"
+                        class="w-full bg-tactical-bg border border-tactical-border rounded-lg px-3 py-2.5 font-tech text-slate-100 placeholder-slate-600 focus:outline-none focus:border-tactical-amber uppercase">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-tech text-slate-300 uppercase mb-1">Категорія *</label>
+                    <select id="prop-category" required class="w-full bg-tactical-bg border border-tactical-border rounded-lg px-3 py-2.5 font-tech text-slate-100 focus:outline-none focus:border-tactical-amber">
+                        <option value="absurd">🎭 Абсурд та Меми</option>
+                        <option value="fauna_flora">🌿 Фауна та Флора</option>
+                        <option value="mythology">🛡️ Міфологія та Історія</option>
+                        <option value="tech_comm">⚡ Техніка та Зв'язок</option>
+                        <option value="short_punchy">⚡ Короткі та Звучні</option>
+                        <option value="character_element">🔥 Характер та Стихія</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-tech text-slate-300 uppercase mb-1">Значення / Опис (необов'язково)</label>
+                    <textarea id="prop-meaning" rows="2" placeholder="Коротке пояснення значення або чому цей позивний крутий..."
+                        class="w-full bg-tactical-bg border border-tactical-border rounded-lg px-3 py-2 font-sans text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-tactical-amber"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-tech text-slate-300 uppercase mb-1">Армійський Мем чи Ситуація (необов'язково)</label>
+                    <input type="text" id="prop-meme" placeholder="Наприклад: Коли питають як спрацювали — відповідає 'Чисто як аптека'"
+                        class="w-full bg-tactical-bg border border-tactical-border rounded-lg px-3 py-2 font-sans text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-tactical-amber">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" onclick="closeProposeModal()" class="px-4 py-2 bg-tactical-bg hover:bg-tactical-hover border border-tactical-border rounded-lg font-tech text-xs text-slate-300">
+                        Скасувати
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-tactical-amber hover:bg-amber-400 text-black font-tech font-bold rounded-lg text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> Додати позивний
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-tactical-border bg-tactical-card/50 py-4 mt-8 text-center text-xs text-slate-500 font-mono">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>⚔️ Тактичний інструмент для формування чіткого зв'язку в ефірі</span>
+            <span>Слава Україні! 🇺🇦</span>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ================= GLOBAL STATE & UTILS =================
+        const CATEGORY_NAMES = {
+            all: "УСІ КАТЕГОРІЇ",
+            absurd: "🎭 АБСУРД ТА МЕМИ",
+            short_punchy: "КОРОТКІ ТА ЗВУЧНІ",
+            fauna_flora: "ФАУНА ТА ФЛОРА",
+            mythology: "МІФОЛОГІЯ ТА ІСТОРІЯ",
+            tech_comm: "ТЕХНІКА ТА ЗВ'ЯЗОК",
+            character_element: "ХАРАКТЕР ТА СТИХІЯ",
+            combo: "ПРИКМЕТНИК + ІМЕННИК"
+        };
+
+        let currentCategory = 'all';
+        let quizAnswers = { role: null, trait: null, vibe: null };
+        let favorites = JSON.parse(localStorage.getItem('fav_callsigns') || '[]');
+        let customProposals = JSON.parse(localStorage.getItem('custom_user_callsigns') || '[]');
+        let currentDisplayedCallsign = null;
+
+        // ================= DATABASE OF CALL SIGNS =================
+        const BASE_CALLSIGN_DATABASE = [
+            // --- 🎭 ABSURD & MEME CALLSIGNS (100 VARIANTS) ---
+            { callsign: "Пельмень", category: "absurd", meaning: "Спокійний хлопець, який витримує будь-яку заморозку та холод у бліндажі.", advice: "2 склади. Висока розбірливість.", meme: { title: "Морозостійкість 100:", text: "— 'Пельмень, тобі не холодно?' — 'Та нормально, в морозилці й гірше буває.'", icon: "fa-bowl-food", badge: "🥟 Заморозка" } },
+            { callsign: "Борщ", category: "absurd", meaning: "Густий, гарячий, накриває ворога з першої ж ложки.", advice: "1 склад, звучний.", meme: { title: "Артилерія на зв'язку:", text: "— 'Борщ у дорозі, чекайте додаткову порцію пампушок з заправкою!'", icon: "fa-utensils", badge: "🍲 Гарячий" } },
+            { callsign: "Чебурек", category: "absurd", meaning: "Гарячий хлопець, який з'являється нізвідки і дає вогню.", advice: "3 склади. Ритмічний.", meme: { title: "Хрустить але не ламається:", text: "Виринає з посадки з новими трофеями і посмішкою.", icon: "fa-hotdog", badge: "🥐 Гарячий" } },
+            { callsign: "Мазик", category: "absurd", meaning: "Той, хто зв'язує будь-яку компанію у бліндажі.", advice: "Короткий 2-складовий.", meme: { title: "Універсальний заправник:", text: "Ніякий обід чи вихід не обходиться без його участі.", icon: "fa-jar", badge: "🧴 Заправка" } },
+            { callsign: "Сосиска", category: "absurd", meaning: "Гнучкий бієць, який пролазить у будь-яку щілину.", advice: "3 склади.", meme: { title: "Таймінг проходження в лаз:", text: "Втиснувся в найменший щілиноподібний окоп.", icon: "fa-mattress-pillow", badge: "🌭 Гнучкий" } },
+            { callsign: "Батон", category: "absurd", meaning: "М'який на вигляд, але може й нагодувати, і дати каскою.", advice: "2 склади.", meme: { title: "Скеля бліндажа:", text: "Нагодує роту і закриє собою бійницю.", icon: "fa-bread-slice", badge: "🍞 Сила" } },
+            { callsign: "Кисіль", category: "absurd", meaning: "Спокійний розвідник, що безшумно 'розтікається' по зеленці.", advice: "М'яка вимова.", meme: { title: "Розчинення у темряві:", text: "Тільки-но був поруч, а вже стежить з іншого боку куща.", icon: "fa-glass-water", badge: "🥤 Стелс" } },
+            { callsign: "Компот", category: "absurd", meaning: "Суміш усіх можливих ідей, талантів та лайфхаків.", advice: "2 склади.", meme: { title: "Суміш талантів:", text: "За 5 хвилин зробить пічку, відремонтує рацію та зварить каву.", icon: "fa-wine-bottle", badge: "🍹 Мікс" } },
+            { callsign: "Голубці", category: "absurd", meaning: "Позивний для пари бійців, які завжди працюють дуетом.", advice: "3 склади.", meme: { title: "Завжди парою:", text: "Ніколи не ходять поодинці — один тримає автомат, інший БК.", icon: "fa-users flex font-bold", badge: "🥬 Дует" } },
+            { callsign: "Квасок", category: "absurd", meaning: "Підбадьорює роту краще за будь-який енергетик.", advice: "Дзвінкий склад.", meme: { title: "Освежаючий вайб:", text: "— 'Квасок на позиції, всім підняти настрій!'", icon: "fa-bottle-droplet", badge: "🍺 Енергія" } },
+            { callsign: "Тапок", category: "absurd", meaning: "Швидкий, легкий на підйом; збиває ворожі БПЛА.", advice: "2 склади. Високий темп.", meme: { title: "Швидка відповідь:", text: "Прилітає по ворожій розвідці наче домашній тапок у муху.", icon: "fa-shoe-prints", badge: "🩴 Удар" } },
+            { callsign: "Дуршлаг", category: "absurd", meaning: "Оператор, чий вогонь робить із техніки ворога сито.", advice: "Тверді приголосні.", meme: { title: "Точність кулемета:", text: "— 'Дуршлаг відпрацював, там тепер суцільна вентиляція.'", icon: "fa-border-none", badge: "🕳️ Сито" } },
+            { callsign: "Швабра", category: "absurd", meaning: "Чисто вимітає посадку від окупантів.", advice: "Короткий і точний.", meme: { title: "Генеральне прибирання:", text: "Чистить позиції з точністю до сантиметра.", icon: "fa-broom", badge: "🧹 Чистка" } },
+            { callsign: "Каструля", category: "absurd", meaning: "Каска завжди набакир, але швидко приймає рішення.", advice: "3 склади.", meme: { title: "Тактична каска:", text: "Навіть коли все гримить, зберігає холодну голову.", icon: "fa-kitchen-set", badge: "🍲 Каска" } },
+            { callsign: "Носок", category: "absurd", meaning: "Загубиться вночі в темряві, але зранку обов'язково знайдеться.", advice: "2 склади.", meme: { title: "Майстер маскування:", text: "Зникає з виду під час нарядів, але з'являється до обіду.", icon: "fa-socks", badge: "🧦 Пошук" } },
+            { callsign: "Хом'як", category: "absurd", meaning: "Тягне в бліндаж усе: від сухпаїв до запасної рації.", advice: "2 склади.", meme: { title: "Запаси бліндажа:", text: "У його рюкзаку є навіть те, чого немає на складі бригади.", icon: "fa-box-archive", badge: "🐹 Запаси" } },
+            { callsign: "Таракан", category: "absurd", meaning: "Виживає в будь-яких умовах і з'являється раптово.", advice: "3 склади.", meme: { title: "Живучість 100%:", text: "Ніякий арт-обстріл не завадить йому доварити макарони.", icon: "fa-bug", badge: "🪰 Незламний" } },
+            { callsign: "Качка", category: "absurd", meaning: "Пересувається кумедно через важку броню та БК.", advice: "2 склади.", meme: { title: "Хода ваговоза:", text: "Несе на собі 45 кг спорядження з виразом обличчя 'все під контролем'.", icon: "fa-feather", badge: "🦆 Ваговоз" } },
+            { callsign: "Моль", category: "absurd", meaning: "Тихо і непомітно знищує запаси противника.", advice: "1 склад.", meme: { title: "Нічна робота:", text: "Прогризає оборону ворога без зайвого шуму.", icon: "fa-shirt", badge: "🦋 Тінь" } },
+            { callsign: "Бойлер", category: "absurd", meaning: "Гарячий хлопець, який довго закипає, але потім дає пар.", advice: "2 склади.", meme: { title: "Темперамент:", text: "Довго мовчить, але потім роздає вогню за трьох.", icon: "fa-temperature-full", badge: "♨️ Пар" } },
+            { callsign: "Пилсос", category: "absurd", meaning: "Збирає всі трофеї та корисні речі з виходів.", advice: "2 склади.", meme: { title: "Трофейна група:", text: "Зібрав трофейні рації, планшети і навіть новенькі берці.", icon: "fa-box-open", badge: "🧹 Збір" } },
+            { callsign: "Чайник", category: "absurd", meaning: "Довго дується, а потім шумить на всю позицію.", advice: "2 склади.", meme: { title: "Перед атакою:", text: "Шумить і свистить, але у потрібний момент видає результат.", icon: "fa-mug-hot", badge: "🫖 Свист" } },
+            { callsign: "Дід", category: "absurd", meaning: "22-річний боєць, який букрить як 80-річний старчик.", advice: "1 склад.", meme: { title: "Досвід змалечку:", text: "— 'Ох, молодь пішла, окоп нормально викопати не можуть!'", icon: "fa-user-clock", badge: "👴 Ворчун" } },
+            { callsign: "Прораб", category: "absurd", meaning: "Критикує як викопаний окоп, так і збудований бліндаж.", advice: "2 склади.", meme: { title: "Будівельний нагляд:", text: "— 'Хто ж так перекриття робить? Давай по-новому перекладемо!'", icon: "fa-helmet-safety", badge: "🏗️ Окоп" } },
+
+            // --- 🌿 FAUNA & FLORA ---
+            { callsign: "Крук", category: "fauna_flora", meaning: "Птах мудрості, висотного спостереження та швидкої реакції.", advice: "Ідеальний 1-складовий позивний.", meme: { title: "Ранкова кава аеророзвідки:", text: "— 'Крук у небі. Бачу рух... зараз підкажемо скидом.'", icon: "fa-crow", badge: "🦅 Очі Неба" } },
+            { callsign: "Сокіл", category: "fauna_flora", meaning: "Стрімкий, пильний та точний. Класика пілотів та ДРГ.", advice: "Дуже чітке звучання.", meme: { title: "Швидкість Сокола:", text: "Пікап їде 140 км/год, а Сокіл каже: 'Давай другу передачу!'", icon: "fa-feather-pointed", badge: "🚀 Форсаж" } },
+            { callsign: "Бобер", category: "fauna_flora", meaning: "Майстер інженерної справи, фортифікації та бункерів.", advice: "Добре розрізняється.", meme: { title: "За 2 години на СП:", text: "Викопав 3-поверховий бліндаж із сонячними панелями.", icon: "fa-person-digging", badge: "🦫 Фортеця" } },
+            { callsign: "Джміль", category: "fauna_flora", meaning: "Невпинна робота, мобільність та точний точковий удар.", advice: "М'який, але впізнаваний.", meme: { title: "Всюдихід:", text: "Жужжить по багнюці, але БК привозит вчасно.", icon: "fa-bugs", badge: "🐝 Доставка" } },
+
+            // --- 🛡️ MYTHOLOGY & HISTORY ---
+            { callsign: "Скіф", category: "mythology", meaning: "Символ волелюбності, степового вишколу та безстрашності.", advice: "Висока чіткість. 1 склад.", meme: { title: "Степовий гарт:", text: "— '2000 років тому наші предки тут кошмарили ворога, і ми продовжимо.'", icon: "fa-shield-halved", badge: "🏹 Воїн" } },
+            { callsign: "Харон", category: "mythology", meaning: "Невблаганний провідник крізь туман та найнебезпечніші зони.", advice: "Добре чути в ефірі.", meme: { title: "Транспорт на нуль:", text: "— 'Харон на зв'язку. Дорога безкоштовна, але тримайте автомати.'", icon: "fa-skull-crossbones", badge: "🚣‍♂️ Таксі" } },
+            { callsign: "Байда", category: "mythology", meaning: "Козацька стійкість, кмітливість та непохитність духу.", advice: "Традиційне коротке звучання.", meme: { title: "РЕБ з підручних засобів:", text: "Зробив глушилку з двох цвяхів та батарейки від старлінка.", icon: "fa-guitar", badge: "🪕 Кмітливість" } },
+
+            // --- ⚡ TECH & COMM ---
+            { callsign: "Піксель", category: "tech_comm", meaning: "Маскування, системність та розчинення у ландшафті.", advice: "Сучасний, дуже чіткий.", meme: { title: "Стелс 100:", text: "Старшина пройшов у метрі і не помітив Пікселя в кущі.", icon: "fa-border-all", badge: "🫥 Стелс" } },
+            { callsign: "Калібр", category: "tech_comm", meaning: "Точність вимірювань, стандарт якості та нищівна сила.", advice: "Тверді приголосні 'К' і 'Б'.", meme: { title: "Кучність:", text: "Усі 5 пострілів влучили в одну дірку від цвяха.", icon: "fa-bullseye", badge: "🎯 Точність" } },
+
+            // --- ⚡ SHORT & PUNCHY ---
+            { callsign: "Грім", category: "short_punchy", meaning: "Раптовий, гучний та нищівний сигнал сили.", advice: "1 склад, ідеально для шуму.", meme: { title: "Грім чхає:", text: "Усі поблизу падають і кричать 'ПРИЛІТ!'.", icon: "fa-volume-high", badge: "💥 Бабах" } },
+            { callsign: "Тінь", category: "short_punchy", meaning: "Незапобіжне та непримітне пересування.", advice: "М'який, але дуже короткий.", meme: { title: "Нічний вихід:", text: "Прийшов із завдання непоміченим із купою нових трофеїв.", icon: "fa-user-ninja", badge: "𥷡 Ніч" } }
+        ];
+
+        // Combine base DB with custom submitted ones
+        let CALLSIGN_DATABASE = [...BASE_CALLSIGN_DATABASE, ...customProposals];
+
+        let recentHistory = [];
+        const HISTORY_LIMIT = 8;
+
+        // Web Audio API Click Sound
+        function playTacticalClick() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                
+                const bufferSize = ctx.sampleRate * 0.004;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                }
+
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1400;
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.004);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                noise.start();
+            } catch (e) {}
+        }
+
+        const COMBO_ADJECTIVES = ["Тихий", "Лютий", "Залізний", "Гострий", "Сталевий", "Нічний", "Холодний", "Червоний", "Швидкий", "Темний", "Світлий", "Дикий", "Хитрий", "Борзий"];
+        const COMBO_NOUNS = ["Крук", "Граніт", "Норд", "Сокіл", "Фокус", "Шторм", "Вектор", "Піксель", "Лис", "Яструб", "Орлан", "Барс", "Шакал", "Джміль"];
+
+        // ================= INITIALIZATION =================
+        window.onload = function() {
+            renderCategoryPills();
+            generateNewCallsign();
+            updateFavoritesBadge();
+            renderFavoritesUI();
+            
+            document.getElementById('custom-callsign-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') analyzeCustomCallsign();
+            });
+        };
+
+        // ================= TAB SWITCHING =================
+        function switchTab(tabId) {
+            playTacticalClick();
+            ['generator', 'quiz', 'analyzer', 'favorites'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.remove('bg-tactical-amber', 'text-black', 'shadow');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.remove('text-slate-400');
+            activeBtn.classList.add('bg-tactical-amber', 'text-black', 'shadow');
+        }
+
+        // ================= CATEGORY & GENERATOR =================
+        function renderCategoryPills() {
+            const container = document.getElementById('category-pills');
+            container.innerHTML = '';
+
+            Object.keys(CATEGORY_NAMES).forEach(catKey => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1.5 rounded-lg text-xs font-tech transition border ${
+                    currentCategory === catKey 
+                    ? 'bg-tactical-amber text-black border-tactical-amber font-bold shadow' 
+                    : 'bg-tactical-bg text-slate-300 border-tactical-border hover:border-slate-500'
+                }`;
+                btn.innerText = CATEGORY_NAMES[catKey];
+                btn.onclick = () => {
+                    playTacticalClick();
+                    currentCategory = catKey;
+                    renderCategoryPills();
+                    generateNewCallsign();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function countUkrainianSyllables(text) {
+            const vowels = text.match(/[аеєиіїоуюяАЕЄИІЇОУЮЯaeiouyAEIOUY]/g);
+            return vowels ? vowels.length : 1;
+        }
+
+        function calculateRadioScore(callsign) {
+            const len = callsign.length;
+            const syllables = countUkrainianSyllables(callsign);
+            let score = 9.0;
+
+            if (syllables === 1) score += 0.8;
+            else if (syllables === 2) score += 0.5;
+            else if (syllables >= 4) score -= 2.0;
+
+            if (/[шщчжр]/i.test(callsign)) score += 0.2;
+            if (len > 10) score -= 1.5;
+
+            return Math.min(10, Math.max(5.0, score)).toFixed(1);
+        }
+
+        function generateNewCallsign() {
+            playTacticalClick();
+            const outputEl = document.getElementById('callsign-output');
+            outputEl.classList.add('scale-95', 'opacity-50');
+
+            setTimeout(() => {
+                let selectedItem = null;
+
+                if (currentCategory === 'combo') {
+                    const adj = COMBO_ADJECTIVES[Math.floor(Math.random() * COMBO_ADJECTIVES.length)];
+                    const noun = COMBO_NOUNS[Math.floor(Math.random() * COMBO_NOUNS.length)];
+                    const fullCallsign = `${adj} ${noun}`;
+
+                    selectedItem = {
+                        callsign: fullCallsign,
+                        category: "combo",
+                        meaning: `Комбінований позивний: злиття властивості (${adj.toLowerCase()}) та сутності (${noun.toLowerCase()}).`,
+                        advice: "Подвійний склад, висока унікальність.",
+                        meme: { title: "Вайб по рації:", text: `— '${fullCallsign} на зв'язку, бачу ціль і працюю!'`, icon: "fa-walkie-talkie", badge: "📻 Комбо" }
+                    };
+                } else {
+                    let pool = CALLSIGN_DATABASE;
+                    if (currentCategory !== 'all') {
+                        pool = CALLSIGN_DATABASE.filter(item => item.category === currentCategory);
+                    }
+
+                    if (pool.length === 0) pool = CALLSIGN_DATABASE;
+
+                    let availablePool = pool.filter(item => !recentHistory.includes(item.callsign));
+                    if (availablePool.length === 0) availablePool = pool;
+
+                    selectedItem = availablePool[Math.floor(Math.random() * availablePool.length)];
+
+                    recentHistory.push(selectedItem.callsign);
+                    if (recentHistory.length > HISTORY_LIMIT) recentHistory.shift();
+                }
+
+                currentDisplayedCallsign = selectedItem;
+
+                outputEl.innerText = selectedItem.callsign;
+                document.getElementById('display-category').innerText = CATEGORY_NAMES[selectedItem.category] || "ГЕНЕРАТОР";
+                document.getElementById('callsign-meaning').innerText = selectedItem.meaning;
+                
+                if (selectedItem.meme) {
+                    document.getElementById('meme-title').innerText = selectedItem.meme.title || "Ситуація на позиції:";
+                    document.getElementById('meme-text').innerText = `"${selectedItem.meme.text}"`;
+                    document.getElementById('meme-badge').innerText = selectedItem.meme.badge || "💯 100% База";
+                    document.getElementById('meme-icon-box').innerHTML = `<i class="fa-solid ${selectedItem.meme.icon || 'fa-masks-theater'}"></i>`;
+                }
+
+                const sylCount = countUkrainianSyllables(selectedItem.callsign);
+                document.getElementById('syllables-count').innerText = `${sylCount} ${sylCount === 1 ? 'склад' : sylCount < 5 ? 'склади' : 'складів'}`;
+                
+                const rScore = calculateRadioScore(selectedItem.callsign);
+                document.getElementById('radio-score').innerText = `${rScore} / 10`;
+                document.getElementById('radio-score-bar').style.width = `${(rScore / 10) * 100}%`;
+                document.getElementById('radio-advice').innerText = selectedItem.advice || "Добре чути в ефірі";
+
+                outputEl.classList.remove('scale-95', 'opacity-50');
+            }, 100);
+        }
+
+        function copyCurrentCallsign() {
+            if (!currentDisplayedCallsign) return;
+            copyText(`${currentDisplayedCallsign.callsign} — ${currentDisplayedCallsign.meaning}`);
+        }
+
+        // ================= LANGUAGE VALIDATION (NO RUSSIAN ALLOWED) =================
+        function validateLanguageInput(str) {
+            if (!str) return { valid: true };
+
+            // Russian specific characters: ы, э, ъ, ё (both case)
+            const russianCharRegex = /[ыэъёЫЭЪЁ]/;
+            if (russianCharRegex.test(str)) {
+                return { valid: false, reason: "Спрацював мовний фільтр! Виявлено російські літери (ы, э, ъ, ё). Вхід заблоковано." };
+            }
+
+            // Allowed pattern: Ukrainian Cyrillic + English alphabet + digits + standard punctuation (space, hyphen, apostrophe)
+            const allowedPattern = /^[a-zA-Zа-щьюяьА-ЩЬЮЯЬІіЇїЄєҐґ0-9\s'\-’.,!?"()]+$/;
+            if (!allowedPattern.test(str)) {
+                return { valid: false, reason: "Дозволено використовувати тільки Українську 🇺🇦 або Англійську 🇬🇧 мови!" };
+            }
+
+            return { valid: true };
+        }
+
+        // ================= PROPOSE FORM & MODAL =================
+        function openProposeModal() {
+            playTacticalClick();
+            document.getElementById('propose-modal').classList.remove('hidden');
+        }
+
+        function closeProposeModal() {
+            playTacticalClick();
+            document.getElementById('propose-modal').classList.add('hidden');
+            document.getElementById('propose-form').reset();
+        }
+
+        function handleProposeSubmit(e) {
+            e.preventDefault();
+            playTacticalClick();
+
+            const name = document.getElementById('prop-name').value.trim();
+            const category = document.getElementById('prop-category').value;
+            const meaning = document.getElementById('prop-meaning').value.trim();
+            const memeText = document.getElementById('prop-meme').value.trim();
+
+            // Validate Language for Name
+            const nameCheck = validateLanguageInput(name);
+            if (!nameCheck.valid) {
+                showToast(nameCheck.reason, "error");
+                return;
+            }
+
+            // Validate Meaning if provided
+            if (meaning) {
+                const meaningCheck = validateLanguageInput(meaning);
+                if (!meaningCheck.valid) {
+                    showToast(meaningCheck.reason, "error");
+                    return;
+                }
+            }
+
+            // Validate Meme if provided
+            if (memeText) {
+                const memeCheck = validateLanguageInput(memeText);
+                if (!memeCheck.valid) {
+                    showToast(memeCheck.reason, "error");
+                    return;
+                }
+            }
+
+            // Check if callsign already exists
+            if (CALLSIGN_DATABASE.some(c => c.callsign.toLowerCase() === name.toLowerCase())) {
+                showToast(`Позивний "${name}" вже існує в базі!`, "warning");
+                return;
+            }
+
+            const finalMeaning = meaning || `Тактичний позивний "${name}", доданий побратимом.`;
+
+            const newCallsignObj = {
+                callsign: name,
+                category: category,
+                meaning: finalMeaning,
+                advice: `${countUkrainianSyllables(name)} ${countUkrainianSyllables(name) === 1 ? 'склад' : 'склади'}. Додано користувачем.`,
+                meme: {
+                    title: "Користувацька історія:",
+                    text: memeText || `Позивний "${name}" успішно поповнив армійський арсенал!`,
+                    icon: "fa-user-check",
+                    badge: "✨ Користувацький"
+                }
+            };
+
+            // Push to memory & localStorage
+            CALLSIGN_DATABASE.push(newCallsignObj);
+            customProposals.push(newCallsignObj);
+            localStorage.setItem('custom_user_callsigns', JSON.stringify(customProposals));
+
+            closeProposeModal();
+            showToast(`Позивний "${name}" схвалено та додано в базу! 🇺🇦`);
+            
+            // Auto switch to newly added callsign
+            currentCategory = category;
+            renderCategoryPills();
+            currentDisplayedCallsign = newCallsignObj;
+            
+            document.getElementById('callsign-output').innerText = newCallsignObj.callsign;
+            document.getElementById('display-category').innerText = CATEGORY_NAMES[category];
+            document.getElementById('callsign-meaning').innerText = newCallsignObj.meaning;
+            document.getElementById('meme-title').innerText = newCallsignObj.meme.title;
+            document.getElementById('meme-text').innerText = `"${newCallsignObj.meme.text}"`;
+            document.getElementById('meme-badge').innerText = newCallsignObj.meme.badge;
+            document.getElementById('meme-icon-box').innerHTML = `<i class="fa-solid ${newCallsignObj.meme.icon}"></i>`;
+        }
+
+        // ================= QUIZ LOGIC =================
+        function selectQuizOption(type, val) {
+            playTacticalClick();
+            quizAnswers[type] = val;
+
+            const containerMap = { role: 'quiz-role-options', trait: 'quiz-trait-options', vibe: 'quiz-vibe-options' };
+            const buttons = document.querySelectorAll(`#${containerMap[type]} .quiz-opt`);
+            buttons.forEach(btn => btn.classList.remove('border-tactical-amber', 'bg-tactical-amber/10', 'text-tactical-amber'));
+
+            event.currentTarget.classList.add('border-tactical-amber', 'bg-tactical-amber/10', 'text-tactical-amber');
+        }
+
+        function calculateQuizResults() {
+            if (!quizAnswers.role || !quizAnswers.trait || !quizAnswers.vibe) {
+                showToast("Будь ласка, дайте відповідь на всі 3 питання!", "warning");
+                return;
+            }
+
+            playTacticalClick();
+            const resultsCards = document.getElementById('quiz-results-cards');
+            resultsCards.innerHTML = '';
+
+            let filtered = [...CALLSIGN_DATABASE];
+            
+            if (quizAnswers.role === 'absurd' || quizAnswers.vibe === 'absurd') {
+                filtered.sort((a, b) => (a.category === 'absurd' ? -1 : 1));
+            } else if (quizAnswers.role === 'drone') {
+                filtered.sort((a, b) => (a.category === 'fauna_flora' || a.category === 'tech_comm' ? -1 : 1));
+            } else if (quizAnswers.role === 'tech') {
+                filtered.sort((a, b) => (a.category === 'tech_comm' ? -1 : 1));
+            }
+
+            const topThree = filtered.slice(0, 3);
+
+            topThree.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-tactical-bg p-5 rounded-xl border border-tactical-border flex flex-col justify-between space-y-3";
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-tech text-tactical-amber uppercase">${CATEGORY_NAMES[item.category] || 'ПОЗИВНИЙ'}</span>
+                        <h4 class="text-2xl font-tech font-bold text-slate-100 uppercase mt-1">${item.callsign}</h4>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">${item.meaning}</p>
+                    </div>
+                    <div class="pt-3 border-t border-tactical-border flex justify-between items-center">
+                        <span class="text-xs text-slate-400 font-tech">Радіочутність: <b class="text-emerald-400">${calculateRadioScore(item.callsign)}/10</b></span>
+                        <button onclick="saveSpecificToFavorites('${item.callsign}', '${item.meaning.replace(/'/g, "\\'")}')" class="px-3 py-1 bg-tactical-amber/10 hover:bg-tactical-amber text-tactical-amber hover:text-black border border-tactical-amber/30 rounded text-xs font-tech transition">
+                            + В Обране
+                        </button>
+                    </div>
+                `;
+                resultsCards.appendChild(card);
+            });
+
+            document.getElementById('quiz-results-container').classList.remove('hidden');
+            document.getElementById('quiz-results-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetQuiz() {
+            quizAnswers = { role: null, trait: null, vibe: null };
+            document.querySelectorAll('.quiz-opt').forEach(btn => btn.classList.remove('border-tactical-amber', 'bg-tactical-amber/10', 'text-tactical-amber'));
+            document.getElementById('quiz-results-container').classList.add('hidden');
+        }
+
+        // ================= RADIO ANALYZER LOGIC =================
+        function analyzeCustomCallsign() {
+            const input = document.getElementById('custom-callsign-input').value.trim();
+            if (!input) {
+                showToast("Введіть позивний для аналізу!", "warning");
+                return;
+            }
+
+            // Language Check
+            const langCheck = validateLanguageInput(input);
+            if (!langCheck.valid) {
+                showToast(langCheck.reason, "error");
+                return;
+            }
+
+            playTacticalClick();
+            const cleanName = input.toUpperCase();
+            const sylCount = countUkrainianSyllables(cleanName);
+            const len = cleanName.length;
+
+            let scorePct = 95;
+            let tips = [];
+            let phoneticsRating = "Відмінна";
+            let statusText = "Ідеальний для рації";
+
+            if (sylCount === 1) {
+                tips.push("✅ <b>1 склад:</b> Вищий пріоритет для радіоефіру. Пробиває перешкоди та шуми.");
+            } else if (sylCount === 2) {
+                tips.push("✅ <b>2 склади:</b> Оптимальний баланс між виразом і зрозумілістю.");
+            } else if (sylCount === 3) {
+                tips.push("⚠️ <b>3 склади:</b> Припустимо, але рекомендується скорочувати при частих викликах.");
+                scorePct -= 15;
+            } else {
+                tips.push("❌ <b>4+ склади:</b> Занадто довгий позивний. Займає забагато ефірного часу.");
+                scorePct -= 35;
+                phoneticsRating = "Посередня";
+                statusText = "Рекомендовано скоротити";
+            }
+
+            if (/[бвгґдзклмнпрстфхцчшщ]{3,}/i.test(cleanName)) {
+                tips.push("⚠️ Виявлено складне збігання приголосних букв.");
+                scorePct -= 10;
+            } else {
+                tips.push("✅ Відсутні складні накопичення приголосних.");
+            }
+
+            if (/[шщчж]/i.test(cleanName)) {
+                tips.push("🔊 Присутні шиплячі звуки (Ш/Щ/Ч/Ж) — чудово пробивають звичайний радіошум.");
+            }
+
+            scorePct = Math.max(30, Math.min(100, scorePct));
+
+            document.getElementById('analysis-name').innerText = cleanName;
+            document.getElementById('analysis-score-pct').innerText = `${scorePct}%`;
+            document.getElementById('analysis-syllables').innerText = `${sylCount} ${sylCount === 1 ? 'склад' : 'склади'}`;
+            document.getElementById('analysis-phonetics').innerText = phoneticsRating;
+            document.getElementById('analysis-status').innerText = statusText;
+
+            const tipsList = document.getElementById('analysis-tips-list');
+            tipsList.innerHTML = tips.map(t => `<li class="bg-tactical-card p-2.5 rounded border border-tactical-border/50">${t}</li>`).join('');
+
+            document.getElementById('analyzer-output').classList.remove('hidden');
+        }
+
+        // ================= FAVORITES LOGIC =================
+        function saveCurrentToFavorites() {
+            if (!currentDisplayedCallsign) return;
+            saveSpecificToFavorites(currentDisplayedCallsign.callsign, currentDisplayedCallsign.meaning);
+        }
+
+        function saveSpecificToFavorites(callsign, meaning) {
+            playTacticalClick();
+            if (favorites.some(f => f.callsign === callsign)) {
+                showToast(`"${callsign}" вже є в обраному`, "info");
+                return;
+            }
+
+            favorites.push({ callsign, meaning, date: new Date().toLocaleDateString('uk-UA') });
+            localStorage.setItem('fav_callsigns', JSON.stringify(favorites));
+            updateFavoritesBadge();
+            renderFavoritesUI();
+            showToast(`Збережено в обране: "${callsign}"`);
+        }
+
+        function removeFavorite(callsign) {
+            playTacticalClick();
+            favorites = favorites.filter(f => f.callsign !== callsign);
+            localStorage.setItem('fav_callsigns', JSON.stringify(favorites));
+            updateFavoritesBadge();
+            renderFavoritesUI();
+            showToast(`Видалено: "${callsign}"`);
+        }
+
+        function clearAllFavorites() {
+            if (favorites.length === 0) return;
+            playTacticalClick();
+            favorites = [];
+            localStorage.removeItem('fav_callsigns');
+            updateFavoritesBadge();
+            renderFavoritesUI();
+            showToast("Список обраних очищено");
+        }
+
+        function updateFavoritesBadge() {
+            const badge = document.getElementById('fav-badge');
+            if (favorites.length > 0) {
+                badge.innerText = favorites.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderFavoritesUI() {
+            const grid = document.getElementById('favorites-grid');
+            const empty = document.getElementById('favorites-empty');
+            grid.innerHTML = '';
+
+            if (favorites.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            favorites.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-tactical-bg p-4 rounded-xl border border-tactical-border flex flex-col justify-between space-y-3 relative group";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h4 class="text-xl font-tech font-bold text-tactical-amber uppercase">${item.callsign}</h4>
+                            <button onclick="removeFavorite('${item.callsign}')" class="text-slate-500 hover:text-red-400 p-1 transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">${item.meaning}</p>
+                    </div>
+                    <div class="pt-2 border-t border-tactical-border/60 flex justify-between items-center text-[11px] text-slate-500 font-mono">
+                        <span>Збережено: ${item.date || '—'}</span>
+                        <button onclick="copyText('${item.callsign}')" class="text-tactical-cyan hover:underline font-tech uppercase">
+                            Копіювати
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function copyText(str) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = str;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast(`Скопійовано: "${str}"`);
+        }
+
+        function exportFavoritesText() {
+            if (favorites.length === 0) {
+                showToast("Немає даних для експорту", "warning");
+                return;
+            }
+
+            playTacticalClick();
+            let text = "СПИСОК ОБРАНИХ ПОЗИВНИХ:\n=======================\n\n";
+            favorites.forEach((f, i) => {
+                text += `${i + 1}. ${f.callsign}\n   Опис: ${f.meaning}\n\n`;
+            });
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Позивні_Обране_${new Date().toISOString().slice(0,10)}.txt`;
+            link.click();
+            showToast("Файл експортовано!");
+        }
+
+        // ================= TOAST NOTIFICATION UTILITY =================
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let borderColor = 'border-tactical-amber';
+            let icon = 'fa-circle-check text-tactical-amber';
+
+            if (type === 'warning') {
+                borderColor = 'border-amber-500';
+                icon = 'fa-triangle-exclamation text-amber-400';
+            } else if (type === 'error') {
+                borderColor = 'border-red-500';
+                icon = 'fa-ban text-red-500';
+            }
+
+            toast.className = `pointer-events-auto bg-tactical-card border ${borderColor} text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-tech tracking-wider uppercase transform transition-all duration-300 translate-y-[-10px] opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base shrink-0"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-[-10px]', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
